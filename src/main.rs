@@ -1,10 +1,10 @@
+//For basic usage
 use bevy::prelude::*;
-//use bevy::sprite::SpriteBundle;
-
 
 //Component camera
 #[derive(Component)]
 struct Camera;
+
 
 
 //Component player
@@ -26,12 +26,6 @@ fn setup(mut commands: Commands){
     println!("POGORUST");
     //Spawn camera so the stuff actually shows up
     commands.spawn((Camera2d::default(), 
-                    Transform::from_xyz(0.0, 0.0, 0.0), 
-                    //This zooms out the camera - changing the scale to a higher value zooms it out
-                    Projection::from(OrthographicProjection{
-                        scale: 5.0,
-                        ..OrthographicProjection::default_2d()
-                    }),
                     Camera));
 }
 
