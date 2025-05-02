@@ -1,3 +1,5 @@
+use bevy::color::palettes::css::BLACK;
+use bevy::color::palettes::tailwind::GREEN_700;
 //For basic usage
 use bevy::prelude::*;
 //For mouse zooming stuff
@@ -7,11 +9,27 @@ use bevy::input::mouse::*;
 #[derive(Component)]
 struct Camera;
 
-
-
-//Component player
+//Component truck
 #[derive(Component)]
-struct Player;
+struct Truck{
+    truck_id: i32,
+}
+
+//Component for different points
+#[derive(Component)]
+struct Point {
+    point_id: i32,
+}
+
+//Component for cargo (this will be used later)
+#[derive(Component)]
+struct Cargo{
+    cargo_id: i32,
+    //The id of the point where the cargo currently is
+    current_point_id: i32,
+    //The cargo of the point where the cargo is supposed to be
+    target_point_id: i32,
+}
 
 fn main() {
     App::new()
@@ -32,7 +50,7 @@ fn setup(mut commands: Commands){
     //Render background
     //At first a solid colour, then an image
     commands.spawn((Sprite::from_color ( 
-        Color::srgb(0.0, 0.8, 0.0),
+        Color::from(GREEN_700),
         Vec2::new(2000.0, 2000.0),
          ),
         //Z here is used for ordering (so this will be above elements with 0 z etc..)
@@ -42,22 +60,35 @@ fn setup(mut commands: Commands){
 
 fn spawn_truck(mut commands: Commands, asset_server: Res<AssetServer>){
 
+    //I will do stuff with the truck id later, so I just dont want to hardcode it into the spawn function
+    let truck_id = 1;
+
     commands.spawn((Sprite::from_image(asset_server.load("military_truck_above.png")),
                     //Doing a simple mark so I can query this sprite later as my player
-                    Player));
+                    Truck{truck_id: truck_id},
+                ));
 }
 
 //Function to visualise a point on given coords
 //A point is a text and a little circle to signify its position
-fn spawn_point(mut commands: Commands, mut mesh: ResMut<Assets<Mesh>>, mut material: ResMut<Assets<ColorMaterial>>){                                                        //The 5.0 value in transform is there for the ordering (so its visible)
-    commands.spawn((Mesh2d(mesh.add(Circle::new(15.0))), MeshMaterial2d(material.add(Color::hsl(0.9, 0.9, 0.0))), Transform::from_xyz(0.0, 0.0, 5.0)));
+fn spawn_point(mut commands: Commands, mut mesh: ResMut<Assets<Mesh>>, mut material: ResMut<Assets<ColorMaterial>>) {
+    
+    //Once again I have plans for this, but so far it will be hard coded this way
+    let point_id = 1;
+    
+    commands.spawn((Mesh2d(mesh.add(Circle::new(15.0))), 
+                        MeshMaterial2d(material.add(Color::from(BLACK))), 
+                        Transform::from_xyz(0.0, 0.0, 5.0),
+                        Point{point_id: point_id},
+                    ));
+                        
 }
 
 
 
 //System to move the camera slowly to test camera movement
 //For moving i need to be able to modify the transform, i need time delta and speed
-fn camera_player_lock(mut camera_position: Query<&mut Transform, With<Camera>>, mut player_position: Query<&mut Transform, (With<Player>, Without<Camera>)>){
+fn camera_player_lock(mut camera_position: Query<&mut Transform, With<Camera>>, mut player_position: Query<&mut Transform, (With<Truck>, Without<Camera>)>){
 
     //I have now queried the component, but I need to query the individual sub components
     for mut camera_transform in &mut camera_position{
@@ -69,7 +100,7 @@ fn camera_player_lock(mut camera_position: Query<&mut Transform, With<Camera>>, 
 
 
 //Move the player
-fn move_truck(time: Res<Time>, keys: Res<ButtonInput<KeyCode>>, mut player_position: Query<&mut Transform, With<Player>>){
+fn move_truck(time: Res<Time>, keys: Res<ButtonInput<KeyCode>>, mut player_position: Query<&mut Transform, With<Truck>>){
 
     //Speed of movement
     let speed = 500.0;
