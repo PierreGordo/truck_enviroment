@@ -1,5 +1,7 @@
 //For basic usage
 use bevy::prelude::*;
+//For mouse zooming stuff
+use bevy::input::mouse::*;
 
 //Component camera
 #[derive(Component)]
@@ -18,28 +20,18 @@ fn main() {
         //This part fixes weird white edges when importing sprite images
         .set(ImagePlugin::default_nearest()))
     .add_systems(Startup, (setup, render_platform, render_background))
-    .add_systems(Update, (camera_player_lock, move_player))
+    .add_systems(Update, (camera_player_lock, move_player, zoom_camera))
     .run();
 }
 
 fn setup(mut commands: Commands){
-    println!("POGORUST");
+
     //Spawn camera so the stuff actually shows up
     commands.spawn((Camera2d::default(), 
                     Camera));
 }
 
 fn render_platform(mut commands: Commands, asset_server: Res<AssetServer>){
-//Old working version with colour
-/*    commands.spawn((Sprite::from_color ( 
-                    Color::srgb(1.0, 0.0, 0.0),
-                    Vec2::new(50.0, 100.0),
-                     ),
-                    //Z here is used for ordering (so this will be above elements with 0 z etc..)
-                    Transform::from_xyz(0.0, 100.0, 1.0),
-                    //Doing a simple mark so I can query this sprite later as my player
-                    Player));
-*/
 
     commands.spawn((Sprite::from_image(asset_server.load("military_truck_above.png")),
                     //Doing a simple mark so I can query this sprite later as my player
@@ -108,3 +100,16 @@ fn move_player(time: Res<Time>, keys: Res<ButtonInput<KeyCode>>, mut player_posi
     }
 }
 
+// The "Single" in the query says that there is only one element that matches these parameters so I don't have to for loop later
+fn zoom_camera(mouse_wheel: Res<AccumulatedMouseScroll>, camera_query: Single<&mut Projection, With<Camera>>){
+
+    //Since projection is an enum of Perspective, orthographic and custom this match gets out only the orthographic element that i want to modify
+    match *camera_query.into_inner() {
+        Projection::Orthographic(ref mut orthographic) => {
+            //Adding to scale zooms out (the -= is there since it is reversed -> adding to scale zooms out)
+            orthographic.scale -= mouse_wheel.delta.y;
+        }
+        _ => (),
+    }
+
+}
