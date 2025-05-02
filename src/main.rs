@@ -103,13 +103,18 @@ fn move_player(time: Res<Time>, keys: Res<ButtonInput<KeyCode>>, mut player_posi
 // The "Single" in the query says that there is only one element that matches these parameters so I don't have to for loop later
 fn zoom_camera(mouse_wheel: Res<AccumulatedMouseScroll>, camera_query: Single<&mut Projection, With<Camera>>){
 
-    //Since projection is an enum of Perspective, orthographic and custom this match gets out only the orthographic element that i want to modify
-    match *camera_query.into_inner() {
-        Projection::Orthographic(ref mut orthographic) => {
-            //Adding to scale zooms out (the -= is there since it is reversed -> adding to scale zooms out)
-            orthographic.scale -= mouse_wheel.delta.y;
+    let zoom_speed = 0.5;
+
+    //Removing the match since it does not make much sense to have a match when I only need one thing
+    if let Projection::Orthographic(ref mut orthographic) = *camera_query.into_inner(){
+        
+        //Working not smooth variant
+        orthographic.scale -= mouse_wheel.delta.y * zoom_speed;
+
+        //Fix goofy behaviour when zooming in too much (prevents scale from going below 1)
+        if orthographic.scale < 1.0{
+            orthographic.scale = 1.0;
         }
-        _ => (),
     }
 
 }
