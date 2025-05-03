@@ -1,5 +1,5 @@
-use bevy::color::palettes::css::BLACK;
-use bevy::color::palettes::tailwind::GREEN_700;
+use bevy::color::palettes::css::*;
+use bevy::color::palettes::tailwind::*;
 //For basic usage
 use bevy::prelude::*;
 //For mouse zooming stuff
@@ -38,7 +38,7 @@ fn main() {
         //This part fixes weird white edges when importing sprite images
         .set(ImagePlugin::default_nearest()))
     .add_systems(Startup, (setup, spawn_truck, spawn_point))
-    .add_systems(Update, (camera_player_lock, move_truck, zoom_camera))
+    .add_systems(Update, (camera_truck_lock, move_truck, zoom_camera))
     .run();
 }
 
@@ -64,6 +64,8 @@ fn spawn_truck(mut commands: Commands, asset_server: Res<AssetServer>){
     let truck_id = 1;
 
     commands.spawn((Sprite::from_image(asset_server.load("military_truck_above.png")),
+                    //Using the transform only to change the z-ordering, since it sometimes becomes goofy and gets covered up by the ground
+                    Transform::from_xyz(0.0, 0.0, 1.0),
                     //Doing a simple mark so I can query this sprite later as my player
                     Truck{truck_id: truck_id},
                 ));
@@ -76,19 +78,29 @@ fn spawn_point(mut commands: Commands, mut mesh: ResMut<Assets<Mesh>>, mut mater
     //Once again I have plans for this, but so far it will be hard coded this way
     let point_id = 1;
     
-    commands.spawn((Mesh2d(mesh.add(Circle::new(15.0))), 
-                        MeshMaterial2d(material.add(Color::from(BLACK))), 
+    commands.spawn((Mesh2d(mesh.add(Circle::new(30.0))), 
+                        MeshMaterial2d(material.add(Color::from(RED))), 
                         Transform::from_xyz(0.0, 0.0, 5.0),
                         Point{point_id: point_id},
-                    ));
+                        //For some reason I have to use the format! macro and cannot do it in the same way as regular rust
+                    ))
+                    //Adding a text child
+                    .with_child((Text2d::new(format!("Point: {}", point_id)),
+                                        //Just bump up the font size and leave the rest default
+                                        TextFont{font_size: 50.0, ..default()},
+                                        Transform::from_xyz(0.0, -50.0, 5.0),
+                    ))
+                    ;
+    //commands.spawn((Text::new(format!("{}", point_id)),
+    //                  Transform::from_xyz(400.0, -5.0, 5.0),));
+
                         
 }
 
 
 
-//System to move the camera slowly to test camera movement
-//For moving i need to be able to modify the transform, i need time delta and speed
-fn camera_player_lock(mut camera_position: Query<&mut Transform, With<Camera>>, mut player_position: Query<&mut Transform, (With<Truck>, Without<Camera>)>){
+//Very rudimentary system to lock the camera onto the truck, will not be used later
+fn camera_truck_lock(mut camera_position: Query<&mut Transform, With<Camera>>, mut player_position: Query<&mut Transform, (With<Truck>, Without<Camera>)>){
 
     //I have now queried the component, but I need to query the individual sub components
     for mut camera_transform in &mut camera_position{
@@ -99,7 +111,7 @@ fn camera_player_lock(mut camera_position: Query<&mut Transform, With<Camera>>, 
 }
 
 
-//Move the player
+//Move the truck
 fn move_truck(time: Res<Time>, keys: Res<ButtonInput<KeyCode>>, mut player_position: Query<&mut Transform, With<Truck>>){
 
     //Speed of movement
