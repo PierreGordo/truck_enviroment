@@ -21,6 +21,15 @@ struct Point {
     point_id: i32,
 }
 
+//Resource to be able to dynamically spawn points
+#[derive(Resource, Default)]
+struct PointParameters{
+    x: f32,
+    y: f32,
+    id: i32,
+}
+
+
 //Component for cargo (this will be used later)
 #[derive(Component)]
 struct Cargo{
@@ -33,6 +42,7 @@ struct Cargo{
 
 fn main() {
     App::new()
+    .init_resource::<PointParameters>()
     //This fixes weird white edges around sprites
     .add_plugins(DefaultPlugins
         //This part fixes weird white edges when importing sprite images
@@ -64,7 +74,7 @@ fn spawn_truck(mut commands: Commands, asset_server: Res<AssetServer>){
     let truck_id = 1;
 
     commands.spawn((Sprite::from_image(asset_server.load("military_truck_above.png")),
-                    //Using the transform only to change the z-ordering, since it sometimes becomes goofy and gets covered up by the ground
+                    //Using the transform only to change the z-ordering, since it sometimes becomes goofy and gets covered up by the
                     Transform::from_xyz(0.0, 0.0, 1.0),
                     //Doing a simple mark so I can query this sprite later as my player
                     Truck{truck_id: truck_id},
@@ -73,19 +83,21 @@ fn spawn_truck(mut commands: Commands, asset_server: Res<AssetServer>){
 
 //Function to visualise a point on given coords
 //A point is a text and a little circle to signify its position
-fn spawn_point(mut commands: Commands, mut mesh: ResMut<Assets<Mesh>>, mut material: ResMut<Assets<ColorMaterial>>) {
+fn spawn_point(mut commands: Commands, mut mesh: ResMut<Assets<Mesh>>, mut material: ResMut<Assets<ColorMaterial>>, mut parameters: ResMut<PointParameters>) {
     
-    //Once again I have plans for this, but so far it will be hard coded this way
-    let point_id = 1;
+    //Later I can modify these values when I want to spawn multiple points (even though I wasted my time a little bit setting all of this up, because I could have just hardcoded it in, now it is too lato to turn back and atleast I learned about resources :))
+    parameters.x = 100.0;
+    parameters.y = -50.0;
+    parameters.id = 1;
     
     commands.spawn((Mesh2d(mesh.add(Circle::new(30.0))), 
                         MeshMaterial2d(material.add(Color::from(RED))), 
-                        Transform::from_xyz(0.0, 0.0, 5.0),
-                        Point{point_id: point_id},
+                        Transform::from_xyz(parameters.x, parameters.y, 5.0),
+                        Point{point_id: parameters.id},
                         //For some reason I have to use the format! macro and cannot do it in the same way as regular rust
                     ))
                     //Adding a text child
-                    .with_child((Text2d::new(format!("Point: {}", point_id)),
+                    .with_child((Text2d::new(format!("Point: {}", parameters.id)),
                                         //Just bump up the font size and leave the rest default
                                         TextFont{font_size: 50.0, ..default()},
                                         Transform::from_xyz(0.0, -50.0, 5.0),
