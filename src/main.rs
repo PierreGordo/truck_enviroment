@@ -30,6 +30,17 @@ struct PointParameters{
 }
 
 
+//Resource for dynamic road drawing
+#[derive(Resource, Default)]
+struct RoadParameters {
+    from_x: f32,
+    from_y: f32,
+    to_x: f32,
+    to_y: f32,
+    thickness: f32,
+    color: Color,
+}
+
 //Component for cargo (this will be used later)
 #[derive(Component)]
 struct Cargo{
@@ -43,6 +54,7 @@ struct Cargo{
 fn main() {
     App::new()
     .init_resource::<PointParameters>()
+    .init_resource::<RoadParameters>()
     //This fixes weird white edges around sprites
     .add_plugins(DefaultPlugins
         //This part fixes weird white edges when importing sprite images
